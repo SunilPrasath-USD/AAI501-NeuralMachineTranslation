@@ -31,7 +31,7 @@ This repository contains a complete implementation of a neural machine translati
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/german-english-nmt.git
+git clone https://github.com/SunilPrasath-USD/AAI501-NeuralMachineTranslation
 cd german-english-nmt
 
 # Install dependencies
