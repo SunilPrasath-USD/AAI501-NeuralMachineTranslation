@@ -195,7 +195,7 @@ python evaluate_model.py \
 The model achieves the following performance on the WMT14 German-English test set:
 
 - **BLEU Score**: ~27-28 (comparable to the original paper's results)
-- **Training Time**: ~12 hours on a single NVIDIA V100 GPU
+- **Training Time**: ~12 hours on a single NVIDIA RTX 3080Ti GPU
 
 ## Example Translations
 
