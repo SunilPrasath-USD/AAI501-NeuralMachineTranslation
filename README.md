@@ -17,7 +17,6 @@ This repository contains a complete implementation of a neural machine translati
 - PyTorch 2.2+
 - CUDA-enabled GPU (Can do on CPU but 30x slower)
 - Libraries:
-  - torchtext
   - nltk
   - spacy
   - numpy
