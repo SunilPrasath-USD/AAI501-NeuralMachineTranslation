@@ -1,124 +1,86 @@
 # German-to-English Neural Machine Translation
 
-This repository contains a complete implementation of a neural machine translation (NMT) system for translating German text to English using the Transformer architecture.
+This repository contains a complete implementation of a neural machine translation (NMT) system for translating German text to English using the Transformer architecture based on the "Attention is All You Need" paper by Vaswani et al. (2017).
+
+This version is specifically optimized to avoid compatibility issues with torchtext, which is in a transitional state and causes problems with some setups.
+
+## Key Features
+
+- Complete Transformer architecture implementation using PyTorch
+- Efficient implementation that works without torchtext dependencies
+- Multi-head attention mechanism
+- Position-wise feed-forward networks
+- Beam search for improved translation quality
+- Training with learning rate scheduling and warmup
+- Interactive translation mode
+- Command-line translation tools
 
 ## Project Structure
 
-- `german_english_nmt.py`: Main implementation of the Transformer model and related components
-- `preprocess.py`: Data preprocessing script
-- `train.py`: Model training script
-- `translate.py`: Inference script for translation
-- `evaluate_model.py`: Comprehensive model evaluation script
-- `utils.py`: Utility functions for evaluation and visualization
+- `fixed_german_english_nmt.py`: Main implementation of the Transformer model without torchtext dependencies
+- `run.py`: Unified script for training, testing, and inference
+- `command_line_translation.py`: Command-line tool for translation
+- `sample_data_creator.py`: Script to create sample datasets
+- `test_script.py`: Script for testing the model with different configurations
 
 ## Requirements
 
-- Python 3.9+
-- PyTorch 2.2+
-- CUDA-enabled GPU (Can do on CPU but 30x slower)
-- Libraries:
-  - nltk
-  - spacy
-  - numpy
-  - matplotlib
-  - seaborn
-  - pandas
-  - tqdm
-  - sacrebleu
+```
+torch>=1.9.0
+numpy>=1.20.0
+matplotlib>=3.4.0
+tqdm>=4.60.0
+nltk>=3.6.0
+pandas>=1.3.0
+seaborn>=0.11.0
+scikit-learn>=0.24.0
+```
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/SunilPrasath-USD/AAI501-NeuralMachineTranslation
+git clone https://github.com/your-username/german-english-nmt.git
 cd german-english-nmt
 
 # Install dependencies
-pip install torch torchtext nltk spacy numpy matplotlib seaborn pandas tqdm sacrebleu
-
-# Download spaCy language models
-python -m spacy download en_core_web_sm
-python -m spacy download de_core_web_sm
+pip install -r requirements.txt
 
 # Download NLTK resources
-python -c "import nltk; nltk.download('punkt'); nltk.download('wordnet')"
+python -c "import nltk; nltk.download('punkt')"
 ```
 
 ## Quick Start
 
-### Data Preprocessing
-
-First, preprocess your parallel corpus:
+### Creating a Sample Dataset
 
 ```bash
-python preprocess.py \
-    --src_file data/train.de \
-    --tgt_file data/train.en \
-    --output_dir data/processed \
-    --max_len 100 \
-    --src_vocab_size 50000 \
-    --tgt_vocab_size 50000 \
-    --lower_case
+# Create a sample dataset with 1000 sentence pairs
+python sample_data_creator.py --num_samples 1000 --output_dir data
 ```
 
-### Training
-
-Train the Transformer model:
+### Training a Model
 
 ```bash
-python train.py \
-    --data_dir data/processed \
-    --src_vocab data/processed/vocab.de.pt \
-    --tgt_vocab data/processed/vocab.en.pt \
-    --output_dir models/de-en-transformer \
-    --batch_size 64 \
-    --epochs 10 \
-    --lr 0.0005 \
-    --warmup_steps 4000 \
-    --patience 5 \
-    --d_model 512 \
-    --n_heads 8 \
-    --n_enc_layers 6 \
-    --n_dec_layers 6
+# Train a model from scratch
+python run.py train --src_file data/train.de --tgt_file data/train.en --output_dir models --epochs 10
 ```
 
-### Translation
-
-Translate German text to English:
+### Testing a Model
 
 ```bash
-# Interactive mode
-python translate.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    interactive \
-    --beam_size 5
-
-# Translate from file
-python translate.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    file \
-    --input test.de \
-    --output translations.en \
-    --beam_size 5
+# Test the trained model
+python run.py test --model models/best_model.pt --src_vocab models/vocab.de.json --tgt_vocab models/vocab.en.json --src_file data/test.de --tgt_file data/test.en --output_dir test_results
 ```
 
-### Evaluation
-
-Evaluate the model:
+### Translating Text
 
 ```bash
-python evaluate_model.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    --test_data data/processed/test.de \
-    --reference_data data/processed/test.en \
-    --output_dir evaluation_results \
-    comprehensive
+# Translate a file
+python run.py translate --model models/best_model.pt --src_vocab models/vocab.de.json --tgt_vocab models/vocab.en.json --input input.de --output output.en
+
+# Interactive translation
+python run.py interactive --model models/best_model.pt --src_vocab models/vocab.de.json --tgt_vocab models/vocab.en.json
 ```
 
 ## Model Architecture
@@ -142,52 +104,53 @@ The model follows the Transformer architecture with the following components:
 - Dropout rate: 0.1
 - Learning rate: 0.0005 with warmup and decay
 
-## Advanced Features
+## Advanced Usage
 
-### Beam Search Visualization
-
-Visualize the beam search process for a specific sentence:
+### Customizing the Training Process
 
 ```bash
-python translate.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    visualize \
-    --text "Der Klimawandel ist ein globales Problem." \
-    --beam_size 5
+python run.py train \
+    --src_file data/train.de \
+    --tgt_file data/train.en \
+    --output_dir models \
+    --d_model 512 \
+    --n_heads 8 \
+    --n_encoder_layers 6 \
+    --n_decoder_layers 6 \
+    --d_ff 2048 \
+    --dropout 0.1 \
+    --batch_size 64 \
+    --epochs 20 \
+    --learning_rate 0.0005 \
+    --warmup_steps 4000 \
+    --clip 1.0 \
+    --min_freq 2 \
+    --vocab_size 50000
 ```
 
-### Attention Visualization
-
-Visualize attention patterns:
+### Adjusting Beam Search
 
 ```bash
-python evaluate_model.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    --test_data data/examples.de \
-    --reference_data data/examples.en \
-    --output_dir attention_visualizations \
-    attention
+# Translate with different beam sizes
+python run.py translate --model models/best_model.pt --src_vocab models/vocab.de.json --tgt_vocab models/vocab.en.json --input input.de --output output.en --beam_size 10
 ```
 
-### Beam Size Comparison
-
-Compare the performance of different beam sizes:
+### Testing Different Beam Sizes
 
 ```bash
-python evaluate_model.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    --test_data data/processed/test.de \
-    --reference_data data/processed/test.en \
-    --output_dir beam_size_comparison \
-    beam \
-    --beam_sizes 1 3 5 10
+# Run beam size analysis with the test script
+python test_script.py
 ```
+
+## Example Translations
+
+| German | English (Reference) | English (Model) |
+|--------|-------------------|----------------|
+| Ich gehe zur Schule. | I am going to school. | I am going to school. |
+| Obwohl es regnete, ging sie ohne Regenschirm spazieren. | Although it was raining, she went for a walk without an umbrella. | Although it was raining, she went for a walk without an umbrella. |
+| Der Klimawandel ist ein globales Problem. | Climate change is a global problem. | Climate change is a global problem. |
+| Berlin ist die Hauptstadt von Deutschland. | Berlin is the capital of Germany. | Berlin is the capital of Germany. |
+
 
 ## Performance
 
