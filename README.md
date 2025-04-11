@@ -2,12 +2,10 @@
 
 This repository contains a complete implementation of a neural machine translation (NMT) system for translating German text to English using the Transformer architecture based on the "Attention is All You Need" paper by Vaswani et al. (2017).
 
-This version is specifically optimized to avoid compatibility issues with torchtext, which is in a transitional state and causes problems with some setups.
 
 ## Key Features
 
 - Complete Transformer architecture implementation using PyTorch
-- Efficient implementation that works without torchtext dependencies
 - Multi-head attention mechanism
 - Position-wise feed-forward networks
 - Beam search for improved translation quality
