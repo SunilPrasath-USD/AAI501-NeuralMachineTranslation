@@ -1,210 +1,163 @@
 # German-to-English Neural Machine Translation
 
-This repository contains a complete implementation of a neural machine translation (NMT) system for translating German text to English using the Transformer architecture.
+This project implements a robust German to English neural machine translation model using an enhanced transformer-based architecture with PyTorch. The implementation is designed to address overfitting issues and improve translation quality through several key optimizations.
 
-## Project Structure
+## Features
 
-- `german_english_nmt.py`: Main implementation of the Transformer model and related components
-- `preprocess.py`: Data preprocessing script
-- `train.py`: Model training script
-- `translate.py`: Inference script for translation
-- `evaluate_model.py`: Comprehensive model evaluation script
-- `utils.py`: Utility functions for evaluation and visualization
+- Transformer-based sequence-to-sequence model with enhanced architecture
+- SentencePiece (BPE) tokenization for improved handling of rare words
+- Data augmentation with random token dropping, replacement, and swapping
+- Stronger regularization with increased dropout and weight decay
+- Label smoothing to prevent overconfidence in predictions
+- Learning rate scheduling with ReduceLROnPlateau
+- Early stopping to prevent overfitting
+- CUDA GPU acceleration with Automatic Mixed Precision (AMP)
+- Multi30K dataset for training and evaluation
+- BLEU score tracking
+- Comprehensive training progress visualization
 
 ## Requirements
 
 - Python 3.9+
 - PyTorch 2.2+
-- CUDA-enabled GPU (Can do on CPU but 30x slower)
-- Libraries:
-  - torchtext
-  - nltk
+- CUDA-enabled GPU (RTX 3080Ti/3060 12 GB Used for training and eval)
+- Additional dependencies:
   - spacy
-  - numpy
-  - matplotlib
-  - seaborn
-  - pandas
   - tqdm
+  - matplotlib
   - sacrebleu
+  - sentencepiece
 
 ## Installation
 
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/SunilPrasath-USD/AAI501-NeuralMachineTranslation
-cd german-english-nmt
+git clone https://github.com/SunilPrasath-USD/AAI501-NeuralMachineTranslation.git
+cd AAI501-NeuralMachineTranslation
+```
 
-# Install dependencies
-pip install torch torchtext nltk spacy numpy matplotlib seaborn pandas tqdm sacrebleu
+2. Install dependencies:
+```bash
+pip install torch tqdm matplotlib spacy sacrebleu sentencepiece
+```
 
-# Download spaCy language models
+3. Download Spacy language models:
+```bash
 python -m spacy download en_core_web_sm
-python -m spacy download de_core_web_sm
-
-# Download NLTK resources
-python -c "import nltk; nltk.download('punkt'); nltk.download('wordnet')"
+python -m spacy download de_core_news_sm
 ```
 
-## Quick Start
+## Training the Model
 
-### Data Preprocessing
-
-First, preprocess your parallel corpus:
+To train the model, run the improved implementation script:
 
 ```bash
-python preprocess.py \
-    --src_file data/train.de \
-    --tgt_file data/train.en \
-    --output_dir data/processed \
-    --max_len 100 \
-    --src_vocab_size 50000 \
-    --tgt_vocab_size 50000 \
-    --lower_case
+python Seq2Seq_m30Kv1.py
 ```
 
-### Training
+The training process:
+1. Downloads the Multi30K dataset automatically
+2. Trains a SentencePiece model for tokenization
+3. Creates datasets with data augmentation for training
+4. Builds and initializes the enhanced transformer model
+5. Trains with label smoothing and adaptive learning rate
+6. Implements early stopping based on validation performance
+7. Tracks and visualizes training metrics
+8. Provides example translations and interactive mode
 
-Train the Transformer model:
+### Improvements Over Base Implementation
+
+This implementation includes several key enhancements to address overfitting:
+
+1. **Stronger Regularization**:
+   - Increased dropout rate (0.3 vs 0.1)
+   - Added weight decay to optimizer (1e-5)
+   - Implemented label smoothing (0.1)
+
+2. **Learning Rate Scheduling**:
+   - ReduceLROnPlateau scheduler reduces learning rate when validation loss plateaus
+   - Visualization of learning rate changes throughout training
+
+3. **Improved Architecture**:
+   - Increased model capacity (D_MODEL: 512, D_FF: 2048)
+   - Deeper network with 4 transformer layers
+   - Better parameter initialization
+
+4. **Better Training Protocol**:
+   - Early stopping with patience of 5 epochs
+   - More training epochs (20 vs 10)
+   - Best model selection based on validation loss
+
+5. **Data Augmentation**:
+   - Random token dropping (5% chance)
+   - Random token replacement with UNK (5% chance)
+   - Random adjacent token swapping (5% chance)
+
+6. **BPE Tokenization**:
+   - SentencePiece model with 16,000 tokens
+   - Better handling of rare words and morphological variations
+
+## Inference
+
+After training, you can use the inference script for translations:
 
 ```bash
-python train.py \
-    --data_dir data/processed \
-    --src_vocab data/processed/vocab.de.pt \
-    --tgt_vocab data/processed/vocab.en.pt \
-    --output_dir models/de-en-transformer \
-    --batch_size 64 \
-    --epochs 10 \
-    --lr 0.0005 \
-    --warmup_steps 4000 \
-    --patience 5 \
-    --d_model 512 \
-    --n_heads 8 \
-    --n_enc_layers 6 \
-    --n_dec_layers 6
+python Seq2Seq_inference.py --interactive
 ```
 
-### Translation
+### Options
 
-Translate German text to English:
+- `--model-path`: Path to the trained model file (default: 'models/best-model.pt')
+- `--spm-model-path`: Path to the SentencePiece model file (default: 'data/spm/spm.model')
+- `--input-file`: Path to input file with German sentences (one per line)
+- `--output-file`: Path to output file for English translations
+- `--interactive`: Run in interactive mode
+- `--gpu`: Use GPU if available
+
+## Examples
+
+### Batch Translation
 
 ```bash
-# Interactive mode
-python translate.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    interactive \
-    --beam_size 5
-
-# Translate from file
-python translate.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    file \
-    --input test.de \
-    --output translations.en \
-    --beam_size 5
+python Seq2Seq_inference.py --input-file german_sentences.txt --output-file english_translations.txt
 ```
 
-### Evaluation
-
-Evaluate the model:
+### Interactive Translation
 
 ```bash
-python evaluate_model.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    --test_data data/processed/test.de \
-    --reference_data data/processed/test.en \
-    --output_dir evaluation_results \
-    comprehensive
+python Seq2Seq_inference.py --interactive
 ```
 
-## Model Architecture
+## Performance Monitoring
 
-The model follows the Transformer architecture with the following components:
+During training, the implementation tracks:
 
-- **Encoder-Decoder Architecture**: The model consists of encoder and decoder stacks.
-- **Multi-Head Attention**: Allows the model to focus on different parts of the input sequence simultaneously.
-- **Position-wise Feed-Forward Networks**: Applied to each position separately and identically.
-- **Positional Encoding**: Adds information about the position of tokens in the sequence.
-- **Layer Normalization and Residual Connections**: Helps with training stability.
-- **Beam Search for Inference**: Explores multiple possible translations to find the best one.
+- Training loss
+- Validation loss
+- Learning rate changes
+- BLEU scores (calculated periodically)
 
-### Default hyperparameters:
+A comprehensive plot of these metrics is saved as `training_history.png` at the end of training.
 
-- Model dimension (d_model): 512
-- Number of attention heads: 8
-- Number of encoder layers: 6
-- Number of decoder layers: 6
-- Feed-forward dimension: 2048
-- Dropout rate: 0.1
-- Learning rate: 0.0005 with warmup and decay
+## Hyperparameters
 
-## Advanced Features
+The following hyperparameters can be adjusted in the code:
 
-### Beam Search Visualization
+- `BATCH_SIZE`: Batch size for training (default: 128)
+- `D_MODEL`: Dimension of model embeddings (default: 512)
+- `N_LAYERS`: Number of encoder/decoder layers (default: 4)
+- `N_HEADS`: Number of attention heads (default: 8)
+- `D_FF`: Dimension of feedforward layer (default: 2048)
+- `DROPOUT`: Dropout rate (default: 0.3)
+- `LEARNING_RATE`: Initial learning rate (default: 0.0005)
+- `N_EPOCHS`: Maximum number of training epochs (default: 20)
+- `CLIP`: Gradient clipping value (default: 1.0)
+- `VOCAB_SIZE`: SentencePiece vocabulary size (default: 16000)
+- `PATIENCE`: Early stopping patience (default: 5)
 
-Visualize the beam search process for a specific sentence:
+## Results
 
-```bash
-python translate.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    visualize \
-    --text "Der Klimawandel ist ein globales Problem." \
-    --beam_size 5
-```
-
-### Attention Visualization
-
-Visualize attention patterns:
-
-```bash
-python evaluate_model.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    --test_data data/examples.de \
-    --reference_data data/examples.en \
-    --output_dir attention_visualizations \
-    attention
-```
-
-### Beam Size Comparison
-
-Compare the performance of different beam sizes:
-
-```bash
-python evaluate_model.py \
-    --model models/de-en-transformer/best_model.pt \
-    --src_vocab data/processed/vocab.de.pt \
-    --trg_vocab data/processed/vocab.en.pt \
-    --test_data data/processed/test.de \
-    --reference_data data/processed/test.en \
-    --output_dir beam_size_comparison \
-    beam \
-    --beam_sizes 1 3 5 10
-```
-
-## Performance
-
-The model achieves the following performance on the WMT14 German-English test set:
-
-- **BLEU Score**: ~27-28 (comparable to the original paper's results)
-- **Training Time**: ~12 hours on a single NVIDIA RTX 3080Ti GPU
-
-## Example Translations
-
-| German | English (Reference) | English (Model) |
-|--------|-------------------|----------------|
-| Ich gehe zur Schule. | I am going to school. | I am going to school. |
-| Obwohl es regnete, ging sie ohne Regenschirm spazieren. | Although it was raining, she went for a walk without an umbrella. | Although it was raining, she went for a walk without an umbrella. |
-| Der Klimawandel ist ein globales Problem. | Climate change is a global problem. | Climate change is a global problem. |
-| Berlin ist die Hauptstadt von Deutschland. | Berlin is the capital of Germany. | Berlin is the capital of Germany. |
+The improvements implemented in this version significantly reduce the gap between training and validation loss, resulting in better generalization and higher BLEU scores. The model is less prone to overfitting and produces more natural translations.
 
 ## References
 
